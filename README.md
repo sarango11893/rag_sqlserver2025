@@ -14,25 +14,25 @@ El pipeline se divide en dos flujos principales controlados directamente por la 
 
 ### Flujo 1 — Ingestión y Embedding
 
-\```
+```
 Manual Técnico (Texto Plano)
   └─► sp_invoke_external_rest_endpoint
         └─► Ngrok (HTTPS)
               └─► Ollama (nomic-embed-text)
                     └─► Vector (768d)
                           └─► VECTOR(768) en tabla SQL
-\```
+```
 
 ### Flujo 2 — Pipeline de Consulta
 
-\```
+```
 Pregunta del Usuario
   └─► Inferencia Vectorial
         └─► VECTOR_DISTANCE (similitud coseno)
               └─► Prompt Enriquecido con contexto
                     └─► Ollama (Llama 3)
                           └─► Respuesta final en consola SQL
-\```
+```
 
 ### Descripción del Pipeline
 
@@ -51,21 +51,21 @@ Pregunta del Usuario
 
 Instala [Ollama](https://ollama.com/) y descarga los modelos necesarios:
 
-\```bash
+```bash
 # Modelo de lenguaje para generación de respuestas
 ollama run llama3
 
 # Modelo especializado en embeddings (vectores de 768 dimensiones)
 ollama pull nomic-embed-text
-\```
+```
 
 ### 2. Bypass de Red Cifrada con Ngrok
 
 SQL Server 2025 exige endpoints **HTTPS** para sus funciones REST nativas. Dado que Ollama expone un puerto HTTP plano (`http://localhost:11434`), se usa Ngrok como proxy inverso:
 
-\```bash
+```bash
 ngrok http 11434
-\```
+```
 
 > ⚠️ **Nota crítica:** Copia la URL pública generada (ej. `https://abcdef123.ngrok-free.app`). Deberás configurarla en tus scripts SQL.
 
@@ -79,26 +79,26 @@ Ejecuta los scripts de la carpeta `/scripts` en el siguiente orden estricto:
 
 Crea la base de datos y la tabla de destino con el nuevo tipo de dato `VECTOR`, e inserta los manuales del CRM en texto plano.
 
-\```sql
+```sql
 CREATE TABLE BaseConocimientoCRM (
     ID                 INT IDENTITY(1,1) PRIMARY KEY,
     ManualDeReferencia VARCHAR(150)    NOT NULL,
     ParrafoExtraido    NVARCHAR(MAX)   NOT NULL,
     VectorEmbeddings   VECTOR(768)     NULL
 );
-\```
+```
 
 ### 📑 Paso 2 — Habilitar Endpoints Externos (`02_api_config.sql`)
 
 Ejecuta con permisos de `sysadmin` para permitir peticiones HTTP salientes desde el motor de SQL Server:
 
-\```sql
+```sql
 EXEC sp_configure 'show advanced options', 1;
 RECONFIGURE;
 
 EXEC sp_configure 'external rest endpoints status', 1;
 RECONFIGURE;
-\```
+```
 
 ### 📑 Paso 3 — Orquestar el Pipeline RAG (`03_rag_pipeline.sql`)
 
@@ -114,25 +114,25 @@ RECONFIGURE;
 
 Una vez completado el despliegue, consulta tu base de datos en lenguaje natural desde SSMS o VS Code:
 
-\```sql
+```sql
 EXEC SP_PreguntarCRM '¿Es obligatorio ingresar el email al añadir un prospecto en el menú izquierdo?';
-\```
+```
 
 **Respuesta generada en consola:**
 
-\```json
+```json
 [
   {
     "RespuestaAsistenteIA": "Sí. De acuerdo con la Guía de Usuario del Sistema CRM Interno, al navegar al menú izquierdo, entrar a 'Prospectos' y presionar el botón azul 'Añadir Nuevo', es estrictamente obligatorio rellenar el campo de Correo Electrónico para registrar exitosamente al cliente potencial."
   }
 ]
-\```
+```
 
 ---
 
 ## 📂 Estructura del Repositorio
 
-\```
+```
 rag-sqlserver2025-local/
 │
 ├── README.md                  ← Documentación principal del proyecto
@@ -145,7 +145,7 @@ rag-sqlserver2025-local/
 │
 └── config/
     └── ollama-commands.sh     ← Script Bash de orquestación de servicios
-\```
+```
 
 ---
 
